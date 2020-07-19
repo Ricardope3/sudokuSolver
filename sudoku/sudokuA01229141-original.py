@@ -4,7 +4,7 @@ import time
 def cross(A, B):
     "Cross product of elements in A and elements in B."
     "Hace un doble for anidado para concatenar cada elemento de A con cada elemento de B"
-    return [f'{a}{b}' for a in A for b in B]
+    return [a+b for a in A for b in B]
 
 
 # Inicializa el string con todos los digitos
@@ -17,11 +17,9 @@ cols = digits
 squares = cross(rows, cols)
 # Unit list es una lista que contiene listas de las columnas y filas del sudoku
 # y tambien tiene todos los cuadrados
-unitlist = (
-    [cross(rows, c) for c in cols] +
-    [cross(r, cols) for r in rows] + 
-    [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
-)
+unitlist = ([cross(rows, c) for c in cols] +
+            [cross(r, cols) for r in rows] +
+            [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')])
 # Units es un diccionario que tiene como llave un recuadro y su valor es una lista de tres listas
 # Cada lista es una unidad diferente (fila, columna,)
 units = dict((s, [u for u in unitlist if s in u]) for s in squares)
@@ -30,7 +28,19 @@ units = dict((s, [u for u in unitlist if s in u]) for s in squares)
 peers = dict((s, set(sum(units[s], []))-set([s])) for s in squares)
 # Esta es una representacion del sudoku que las siguientes funcines
 # podran parcear
-
+example0 = """
+4 . . |. . . |8 . 5
+. 3 . |. . . |. . .
+. . . |7 . . |. . .
+------+------+------
+. 2 . |. . . |. 6 .
+. . . |. 8 . |4 . .
+. . . |. 1 . |. . .
+------+------+------
+. . . |6 . 3 |. 7 .
+5 . . |2 . . |. . .
+1 . 4 |. . . |. . .
+"""
 # Inicializa funcion assign
 
 
@@ -59,7 +69,6 @@ def eliminate(values, s, d):
         return values  # Already eliminated
     # Quita a d de values[s]
     values[s] = values[s].replace(d, '')
-
     # (1) If a square s is reduced to one value d2, then eliminate d2 from the peers.
     # si ya nos quedamos sin valores entonces no es congruente
     if len(values[s]) == 0:
@@ -71,7 +80,6 @@ def eliminate(values, s, d):
         if not all(eliminate(values, s2, d2) for s2 in peers[s]):
             # Si no se pudo entonces regresa falso
             return False
-
     # (2) If a unit u is reduced to only one place for a value d, then put it there.
     # Para todas las unidades d s
     for u in units[s]:
@@ -88,7 +96,6 @@ def eliminate(values, s, d):
             # Intentamos asignarlo, si no se puede entonces el sudoku es incongruente
             if not assign(values, dplaces[0], d):
                 return False
-
     # regresamos los valores
     return values
 
@@ -133,8 +140,8 @@ def search(values):
     # Chose the unfilled square s with the fewest possibilities
     # Mediante MRV busca los recuadros con menores posibilidades
     n, s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
-    # Recursivamente buscar los valores si puedes asignar cualquiera de
-    # los valores posibles de s
+    # Recursivamente buscar los valores si puedes asignar cualquiera de los valores posibles
+    # de s
     return some(search(assign(values.copy(), s, d))for d in values[s])
 
 
@@ -145,7 +152,7 @@ def some(seq):
         # Si el valor es truthly lo regres
         if e:
             return e
-    # De no ser asi, regresa falso
+    #De no ser asi, regresa falso
     return False
 
 
@@ -158,21 +165,110 @@ def display(values):
     line = '+'.join(['-'*(width*3)]*3)
     # Itera en filas
     for r in rows:
-        # Imprime una fila del sudoku
+        #Imprime una fila del sudoku
         print(("".join(values[r+c].center(width) +
                        ('|' if c in '36' else '') for c in cols)))
         # Para la fila C y F imprime una linea extra que es
         # la que separa tres filas
         if r in 'CF':
             print(line)
-    # Imprime un salto de linea
+    #Imprime un salto de linea
     print()
 
 
 # Resuelve el sudoku buscando las combinaciones
 def solve(grid): return search(parse_grid(grid))
 
-
+#----------------------------------------------#
+easy = """
+5 4 7 |. . . |. 9 1
+. . 3 |9 2 1 |. . 7
+. . . |5 . 4 |. 6 3
+------+------+------
+. . . |. . . |9 . 5
+. 9 . |8 . 6 |. 7 .
+8 . 2 |. . . |. . .
+------+------+------
+9 5 . |3 . 8 |. . .
+3 . . |2 9 7 |1 . .
+7 2 . |. . . |4 3 9
+"""
+start = time.time()
+display(solve(easy))
+end = time.time()
+print("Tiempo del easy",(end - start)*1000)
+#----------------------------------------------#
+medium = """
+6 3 . |. 5 . |8 9 .
+. 7 9 |. 2 . |. . 6
+. 8 . |. . . |. 4 .
+------+------+------
+3 4 8 |. . 5 |. . .
+. . . |. 3 . |. . .
+. . . |7 . . |6 8 3
+------+------+------
+. 5 . |. . . |. 6 .
+1 . . |. 4 . |5 3 .
+. 6 4 |. 8 . |. 1 2
+"""
+start = time.time()
+display(solve(medium))
+end = time.time()
+print("Tiempo del medium",(end - start)*1000)
+#----------------------------------------------#
+hard = """
+. . . |. . 2 |. . .
+. 4 3 |. . . |. . 1
+. 6 . |8 3 . |. 9 .
+------+------+------
+6 . 5 |. . 3 |. 7 .
+. . 9 |. . . |1 . .
+. 8 . |2 . . |9 . 5
+------+------+------
+. 7 . |. 8 9 |. 5 .
+5 . . |. . . |4 3 .
+. . . |4 . . |. . .
+"""
+start = time.time()
+display(solve(hard))
+end = time.time()
+print("Tiempo del hard",(end - start)*1000)
+#----------------------------------------------#
+evil = """
+. . 7 |6 . . |. 9 .
+. . . |2 . 1 |. . .
+. . . |. 5 3 |. . 1
+------+------+------
+2 . 4 |. . . |3 7 .
+6 . . |. . . |. . 9
+. 9 8 |. . . |1 . 4
+------+------+------
+9 . . |3 2 . |. . .
+. . . |4 . 7 |. . .
+. 3 . |. . 6 |5 . .
+"""
+start = time.time()
+display(solve(evil))
+end = time.time()
+print("Tiempo del evil",(end - start)*1000)
+#----------------------------------------------#
+hardest = """
+8 . . |. . . |. . .
+. . 3 |6 . . |. . .
+. 7 . |. 9 . |2 . .
+------+------+------
+. 5 . |. . 7 |. . .
+. . . |. 4 5 |7 . .
+. . . |1 . . |. 3 .
+------+------+------
+. . 1 |. . . |. 6 .
+. . 8 |5 . . |. . .
+. 9 . |. . . |. . .
+"""
+start = time.time()
+display(solve(hardest))
+end = time.time()
+print("Tiempo del hardest",(end - start)*1000)
 #----------------------------------------------#
 otro = """
 . . . |. . 6 |. . .
